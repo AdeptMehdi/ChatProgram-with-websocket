@@ -1,39 +1,72 @@
-# 🚀 سامانه چت بی‌درنگ میدنایت گلس (Midnight Glass Chat)
+<div align="center">
 
-یک پلتفرم چت پیشرفته و بسیار سریع با زبان طراحی **Midnight Apple Style**، تضاد رنگی بالا (High Contrast) و تایپوگرافی فارسی بهینه. این پروژه با تمرکز بر پرفورمنس و زیبایی بصری با استفاده از **Astro** و **Socket.io** توسعه یافته است.
+# 🌌 Midnight Glass Chat | سامانه چت میدنایت گلس
 
----
+An advanced, high-performance real-time chat platform featuring **Midnight Apple Style** design, high contrast aesthetics, and optimized Persian typography. Built with **Astro** and **Socket.io**.
 
-## 🏗 معماری سیستم (System Architecture)
+یک پلتفرم چت پیشرفته و بسیار سریع با زبان طراحی **Midnight Apple Style**، تضاد رنگی بالا و تایپوگرافی فارسی بهینه. توسعه یافته با **Astro** و **Socket.io**.
 
-### ۱. متدولوژی SOP (Service-Oriented Programming)
-این پروژه از معماری سرویس‌گرا برای مدیریت منطق تجاری استفاده می‌کند. تمام عملیات‌های هسته در سرویس‌های ایزوله (`UserService`, `RoomService`, etc) مدیریت می‌شوند تا پایداری و مقیاس‌پذیری سیستم تضمین شود.
-
-### ۲. بهینه‌سازی پرفورمنس
-- **Static Glass**: حذف انیمیشن‌های سنگین پس‌زمینه و جایگزینی با بلوب‌های نوری استاتیک برای کاهش مصرف CPU/GPU.
-- **Optimized Blur**: استفاده از فیلترهای شیشه‌ای بهینه شده برای رندرینگ روان در تمامی مرورگرها.
+</div>
 
 ---
 
-## 💎 ویژگی‌های برجسته UI/UX
+## 🇬� English Description
 
-*   **طراحی Midnight Glassmorphism**: 
+### 🏗 System Architecture
+**1. Service-Oriented Programming (SOP)**
+The project utilizes a service-oriented architecture to handle business logic. All core operations are managed in isolated services (`UserService`, `RoomService`, etc.) to ensure system stability and scalability.
+
+**2. Performance Optimization**
+- **Static Glass**: Replaced heavy background animations with static light blobs to minimize CPU/GPU usage.
+- **Optimized Blur**: Using optimized glass filters for smooth rendering across all browsers.
+
+### 💎 UI/UX Features
+- **Midnight Glassmorphism**: 
+    - Pure black background (`#000000`) combined with glowing glass elements.
+    - High contrast for better readability and a luxurious look.
+    - Inline centered lobby header with light effects.
+- **Typography & Localization**:
+    - Utilizing standard **Vazir** font for Persian text.
+    - Full **RTL** support with localized date/time formatting.
+- **Smart Messaging System**:
+    - **iMessage**-style design with clear distinction between self and other messages.
+    - System alerts with custom **Midnight Apple Swal** styling.
+- **Professional Responsiveness**:
+    - Mobile-First design with a drawer sidebar for mobile devices.
+
+### 🛠 Tech Stack
+- **Astro**: Island architecture for ultra-fast loading speeds.
+- **Socket.io**: Stable real-time communication.
+- **SweetAlert2**: Notification management with Midnight theme.
+- **Vazir Font**: Optimized Persian font for the web.
+
+---
+
+## 🇮🇷 توضیحات فارسی
+
+### 🏗 معماری سیستم
+**۱. متدولوژی برنامه‌نویسی سرویس‌گرا (SOP)**
+این پروژه از معماری سرویس‌گرا برای مدیریت منطق تجاری استفاده می‌کند. تمام عملیات‌های هسته در سرویس‌های ایزوله (`UserService`, `RoomService` و غیره) مدیریت می‌شوند تا پایداری و مقیاس‌پذیری سیستم تضمین شود.
+
+**۲. بهینه‌سازی پرفورمنس**
+- **شیشه استاتیک (Static Glass)**: حذف انیمیشن‌های سنگین پس‌زمینه و جایگزینی با بلوب‌های نوری استاتیک برای کاهش مصرف CPU/GPU.
+- **تاری بهینه (Optimized Blur)**: استفاده از فیلترهای شیشه‌ای بهینه شده برای رندرینگ روان در تمامی مرورگرها.
+
+### 💎 ویژگی‌های برجسته رابط کاربری (UI/UX)
+- **طراحی Midnight Glassmorphism**: 
     - ترکیب رنگ سیاه مطلق (`#000000`) با المان‌های شیشه‌ای درخشان.
     - تضاد رنگی بالا برای خوانایی بهتر و ظاهر لوکس.
     - هدر لابی مرکز‌چین شده با نمایش **Inline** و افکت‌های نوری.
-*   **تایپوگرافی و بومی‌سازی**:
+- **تایپوگرافی و بومی‌سازی**:
     - استفاده از فونت استاندارد **وزیر (Vazir)**.
     - پشتیبانی کامل از **RTL** و تاریخ/زمان فارسی.
-*   **سیستم پیام‌رسانی هوشمند**:
+- **سیستم پیام‌رسانی هوشمند**:
     - طراحی مشابه **iMessage** با تفکیک دقیق پیام‌های خودی و دیگران.
     - هشدارهای سیستمی با استایل اختصاصی **Midnight Apple Swal**.
-*   **ریسپانسیو حرفه‌ای**:
+- **ریسپانسیو حرفه‌ای**:
     - طراحی Mobile-First با سایدبار کشویی (Drawer) در حالت موبایل.
 
----
-
-## 🛠 تکنولوژی‌های مورد استفاده
-
+### 🛠 تکنولوژی‌های مورد استفاده
 - **Astro**: فریم‌ورک جزیره‌ای برای سرعت بارگذاری فوق‌العاده.
 - **Socket.io**: ارتباطات بی‌درنگ و پایدار.
 - **SweetAlert2**: مدیریت اعلان‌ها با تم Midnight.
@@ -41,34 +74,34 @@
 
 ---
 
-## 📂 ساختار پروژه
+## 📂 Project Structure | ساختار پروژه
 
 ```text
 .
 ├── public/
 │   └── css/
-│       └── style.css       # استایل‌های Midnight Glass و متغیرهای بصری
+│       └── style.css       # Midnight Glass styles & visual variables
 ├── src/
 │   ├── components/
-│   │   └── Chat.astro      # رابط کاربری اصلی و منطق کلاینت (Midnight Theme)
+│   │   └── Chat.astro      # Main UI & Client logic (Midnight Theme)
 │   ├── layouts/
-│   │   └── Layout.astro    # ساختار پایه و مدیریت فونت‌ها
+│   │   └── Layout.astro    # Base layout & Font management
 │   └── server/
-│       ├── socket.js       # مدیریت شبکه
-│       └── services/       # منطق تجاری (SOP)
+│       ├── socket.js       # Network handling
+│       └── services/       # Business logic (SOP)
 └── README.md
 ```
 
 ---
 
-## 🚀 راه اندازی سریع (Quick Start)
+## 🚀 Quick Start | راه اندازی سریع
 
-۱. نصب وابستگی‌ها:
+1. **Install Dependencies | نصب وابستگی‌ها:**
 ```bash
 npm install
 ```
 
-۲. اجرای همزمان (در دو ترمینال):
+2. **Run concurrently | اجرای همزمان (در دو ترمینال):**
 ```bash
 # Terminal 1
 npm run server:dev
@@ -77,12 +110,17 @@ npm run server:dev
 npm run dev
 ```
 
-۳. مشاهده: `http://localhost:4321`
+3. **View | مشاهده:** `http://localhost:4321`
 
 ---
 
-## 📜 لایسنس
+## 📜 License | لایسنس
+This project is licensed under the MIT License.
 این پروژه تحت لایسنس MIT منتشر شده است.
 
 ---
-**توسعه یافته با ❤️ برای تجربه کاربری بهتر**
+<div align="center">
+<b>Developed with ❤️ for a better User Experience</b>
+<br>
+<b>توسعه یافته با ❤️ برای تجربه کاربری بهتر</b>
+</div>
