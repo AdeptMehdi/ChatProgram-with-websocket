@@ -12,11 +12,33 @@ class UserService {
    * @param {string} id - Socket ID.
    * @param {string} username - Username.
    * @param {string} room - Room name.
+   * @param {string} role - User role (admin or user).
    */
-  addUser(id, username, room) {
-    const user = { username, room };
+  addUser(id, username, room, role = 'user') {
+    const user = { 
+      username, 
+      room, 
+      role,
+      isMuted: false,
+      joinedAt: new Date().toISOString()
+    };
     this.users.set(id, user);
     return user;
+  }
+
+  /**
+   * Updates a user's role or status.
+   * @param {string} id - Socket ID.
+   * @param {Object} updates - Fields to update.
+   */
+  updateUser(id, updates) {
+    const user = this.users.get(id);
+    if (user) {
+      const updatedUser = { ...user, ...updates };
+      this.users.set(id, updatedUser);
+      return updatedUser;
+    }
+    return null;
   }
 
   /**

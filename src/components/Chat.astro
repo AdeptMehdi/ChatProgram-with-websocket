@@ -5,9 +5,34 @@
  */
 ---
 
-<div id="chat-container">
+<div id="lobby-container">
+    <header>
+        <div class="lobby-header">
+            <h1><i class="fa-solid fa-comments"></i> Chat Lobby</h1>
+            <p>Join an existing room or create your own space</p>
+        </div>
+    </header>
+    <div class="lobby-body">
+        <div class="rooms-section">
+            <h3><i class="fa-solid fa-layer-group"></i> Active Rooms</h3>
+            <div id="rooms-list" class="rooms-list">
+                <div class="loading-rooms">Connecting to server...</div>
+            </div>
+        </div>
+        <div class="lobby-footer">
+            <button id="create-room-btn" class="primary-btn">
+                <i class="fa-solid fa-plus"></i> Create New Room
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="chat-container" style="display: none;">
     <header>
         <div class="room-info">
+            <button id="toggle-users" class="icon-btn mobile-only">
+                <i class="fa-solid fa-users"></i>
+            </button>
             <h2 id="room-name">Room: <span id="current-room">...</span></h2>
         </div>
         <div class="user-info">
@@ -48,13 +73,19 @@
 
 <script>
     import { io } from 'socket.io-client';
+    import Swal from 'sweetalert2';
     
-    // Check if we are on the client side
     if (typeof window !== 'undefined') {
         let socket: any;
         let username: string;
         let room: string;
+        let userRole: string;
         let typingTimeout: any;
+
+        const lobbyContainer = document.getElementById('lobby-container') as HTMLDivElement;
+        const chatContainer = document.getElementById('chat-container') as HTMLDivElement;
+        const roomsListDiv = document.getElementById('rooms-list') as HTMLDivElement;
+        const createRoomBtn = document.getElementById('create-room-btn') as HTMLButtonElement;
 
         const chatForm = document.getElementById('chat-form') as HTMLFormElement;
         const messageInput = document.getElementById('message-input') as HTMLInputElement;
@@ -64,55 +95,127 @@
         const currentUserSpan = document.getElementById('current-user') as HTMLSpanElement;
         const leaveBtn = document.getElementById('leave-btn') as HTMLButtonElement;
         const typingIndicator = document.getElementById('typing-indicator') as HTMLDivElement;
+        const toggleUsersBtn = document.getElementById('toggle-users') as HTMLButtonElement;
+        const sidebar = document.querySelector('.sidebar') as HTMLElement;
 
-        // Function to join the chat via SweetAlert2
-        const joinChat = async () => {
-            const { value: formValues } = await (window as any).Swal.fire({
-                title: 'Join Chat Room',
-                html:
-                    '<input id="swal-input1" class="swal2-input" placeholder="Username">' +
-                    '<input id="swal-input2" class="swal2-input" placeholder="Room Name">',
-                focusConfirm: false,
-                allowOutsideClick: false,
-                preConfirm: () => {
-                    return [
-                        (document.getElementById('swal-input1') as HTMLInputElement).value,
-                        (document.getElementById('swal-input2') as HTMLInputElement).value
-                    ]
+        // Toggle sidebar on mobile
+        toggleUsersBtn?.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+        });
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 768 && 
+                !sidebar.contains(e.target as Node) && 
+                !toggleUsersBtn.contains(e.target as Node) && 
+                sidebar.classList.contains('active')) {
+                sidebar.classList.remove('active');
+            }
+        });
+
+        // Initialize socket immediately to get room updates
+        socket = io('http://localhost:4000');
+
+        socket.on('roomsList', (rooms: any[]) => {
+            renderRoomsList(rooms);
+        });
+
+        const renderRoomsList = (rooms: any[]) => {
+            if (rooms.length === 0) {
+                roomsListDiv.innerHTML = '<div class="no-rooms">No active rooms. Be the first to create one!</div>';
+                return;
+            }
+
+            roomsListDiv.innerHTML = '';
+            rooms.forEach(r => {
+                const roomEl = document.createElement('div');
+                roomEl.className = 'room-card';
+                roomEl.innerHTML = `
+                    <div class="room-details">
+                        <span class="room-name">${r.name}</span>
+                        <span class="room-users"><i class="fa-solid fa-users"></i> ${r.count} users</span>
+                    </div>
+                    <button class="join-btn" data-room="${r.name}">Join Room</button>
+                `;
+                roomsListDiv.appendChild(roomEl);
+            });
+
+            // Add listeners to join buttons
+            document.querySelectorAll('.join-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const roomToJoin = (e.target as HTMLButtonElement).getAttribute('data-room');
+                    if (roomToJoin) handleJoinRequest(roomToJoin);
+                });
+            });
+        };
+
+        const handleJoinRequest = async (roomName?: string) => {
+            const { value: name } = await Swal.fire({
+                title: 'Enter Username',
+                input: 'text',
+                inputLabel: 'What should we call you?',
+                inputPlaceholder: 'Username',
+                showCancelButton: true,
+                inputValidator: (value) => {
+                    if (!value) return 'You need to write something!';
+                    return null;
                 }
             });
 
-            if (formValues) {
-                [username, room] = formValues;
-                if (!username || !room) {
-                    (window as any).Swal.fire('Error', 'Username and Room are required!', 'error').then(joinChat);
-                    return;
+            if (name) {
+                username = name;
+                if (roomName) {
+                    room = roomName;
+                    joinRoom();
+                } else {
+                    // This was a "Create Room" request
+                    const { value: newRoomName } = await Swal.fire({
+                        title: 'Create New Room',
+                        input: 'text',
+                        inputLabel: 'Room Name',
+                        inputPlaceholder: 'Enter room name...',
+                        showCancelButton: true,
+                        inputValidator: (value) => {
+                            if (!value) return 'Room name cannot be empty!';
+                            return null;
+                        }
+                    });
+                    if (newRoomName) {
+                        room = newRoomName;
+                        joinRoom();
+                    }
                 }
-                initSocket();
             }
         };
 
-        const initSocket = () => {
-            // Connect to the backend server (running on port 4000)
-            socket = io('http://localhost:4000');
-
-            socket.on('connect', () => {
-                socket.emit('join', { username, room }, (error: any) => {
-                    if (error) {
-                        (window as any).Swal.fire('Error', error, 'error').then(joinChat);
-                    } else {
-                        roomNameSpan.textContent = room;
-                        currentUserSpan.textContent = `Logged in as: ${username}`;
-                    }
-                });
+        const joinRoom = () => {
+            socket.emit('join', { username, room }, (response: any) => {
+                if (response.error) {
+                    Swal.fire('Error', response.error, 'error');
+                } else {
+                    userRole = response.role;
+                    lobbyContainer.style.display = 'none';
+                    chatContainer.style.display = 'flex';
+                    roomNameSpan.textContent = room;
+                    currentUserSpan.textContent = `Logged in as: ${username} (${userRole})`;
+                    setupChatListeners();
+                }
             });
+        };
 
+        const setupChatListeners = () => {
             socket.on('message', (message: any) => {
                 appendMessage(message);
             });
 
             socket.on('roomData', ({ users }: any) => {
                 renderUserList(users);
+            });
+
+            socket.on('kicked', () => {
+                Swal.fire('Kicked', 'You have been kicked from the room.', 'error').then(() => {
+                    location.reload();
+                });
             });
 
             socket.on('userTyping', ({ username: typingUser, isTyping }: any) => {
@@ -122,11 +225,9 @@
                     typingIndicator.textContent = '';
                 }
             });
-
-            socket.on('disconnect', () => {
-                (window as any).Swal.fire('Disconnected', 'Lost connection to server.', 'warning');
-            });
         };
+
+        createRoomBtn.addEventListener('click', () => handleJoinRequest());
 
         const appendMessage = (message: any) => {
             const messageElement = document.createElement('div');
@@ -145,7 +246,7 @@
             messageElement.innerHTML = `
                 ${!isSystem ? `
                     <div class="message-info">
-                        <strong>${message.user}</strong>
+                        <strong><i class="fa-solid fa-user-circle"></i> ${message.user}</strong>
                         <span>${time}</span>
                     </div>
                 ` : ''}
@@ -161,8 +262,52 @@
             users.forEach(user => {
                 const li = document.createElement('li');
                 li.className = 'user-item';
-                li.innerHTML = `<span class="user-status"></span> ${user.username}`;
+                if (user.role === 'admin') li.classList.add('admin-item');
+                if (user.isMuted) li.classList.add('muted-item');
+
+                li.innerHTML = `
+                    <i class="fa-solid fa-circle-user" style="color: ${user.role === 'admin' ? '#fbbf24' : 'var(--accent)'}"></i>
+                    <div class="user-details">
+                        <span>${user.username} ${user.id === socket.id ? '(You)' : ''}</span>
+                        <small>${user.role}${user.isMuted ? ' | Muted' : ''}</small>
+                    </div>
+                    <span class="user-status"></span>
+                `;
+
+                if (userRole === 'admin' && user.id !== socket.id) {
+                    li.style.cursor = 'pointer';
+                    li.addEventListener('click', () => showActionMenu(user));
+                }
+
                 userListUl.appendChild(li);
+            });
+        };
+
+        const showActionMenu = (targetUser: any) => {
+            Swal.fire({
+                title: `Manage ${targetUser.username}`,
+                text: 'Select an action to perform',
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: targetUser.isMuted ? 'Unmute' : 'Mute',
+                denyButtonText: 'Kick',
+                showDenyButton: true,
+                footer: targetUser.role !== 'admin' ? '<button id="promote-btn" class="swal2-confirm swal2-styled" style="background-color: #fbbf24">Promote to Admin</button>' : '',
+                didOpen: () => {
+                    const promoteBtn = document.getElementById('promote-btn');
+                    if (promoteBtn) {
+                        promoteBtn.onclick = () => {
+                            socket.emit('admin:promote', targetUser.id);
+                            Swal.close();
+                        };
+                    }
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    socket.emit('admin:mute', targetUser.id);
+                } else if (result.isDenied) {
+                    socket.emit('admin:kick', targetUser.id);
+                }
             });
         };
 
@@ -177,7 +322,6 @@
             }
         });
 
-        // Typing indicator logic
         messageInput.addEventListener('input', () => {
             if (socket) {
                 socket.emit('typing', true);
@@ -192,8 +336,9 @@
             location.reload();
         });
 
-        // Start by showing the join dialog
-        joinChat();
+        socket.on('disconnect', () => {
+            Swal.fire('Disconnected', 'Lost connection to server.', 'warning');
+        });
     }
 </script>
 

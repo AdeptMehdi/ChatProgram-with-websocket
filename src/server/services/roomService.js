@@ -33,6 +33,27 @@ class RoomService {
       users: this.getUsersInRoom(room)
     };
   }
+
+  /**
+   * Gets all active rooms with their user counts.
+   * @returns {Array<{name: string, count: number}>}
+   */
+  getAllRooms() {
+    const allUsers = userService.getAllUsers();
+    const roomsMap = new Map();
+
+    allUsers.forEach(user => {
+      if (user.room) {
+        const currentCount = roomsMap.get(user.room) || 0;
+        roomsMap.set(user.room, currentCount + 1);
+      }
+    });
+
+    return Array.from(roomsMap.entries()).map(([name, count]) => ({
+      name,
+      count
+    }));
+  }
 }
 
 export const roomService = new RoomService();
