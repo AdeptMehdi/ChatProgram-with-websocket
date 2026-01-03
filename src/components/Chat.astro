@@ -8,22 +8,22 @@
 <div id="lobby-container">
     <header>
         <div class="lobby-header">
-            <h1><i class="fa-solid fa-comments"></i> Chat Lobby</h1>
-            <p>Join an existing room or create your own space</p>
+            <h1><i class="fa-solid fa-compass-dots"></i> لابی گفتگو</h1>
+            <p>به یک اتاق بپیوندید یا فضای خود را بسازید</p>
         </div>
     </header>
     <div class="lobby-body">
         <div class="rooms-section">
-            <h3><i class="fa-solid fa-layer-group"></i> Active Rooms</h3>
+            <h3><i class="fa-solid fa-wave-pulse"></i> اتاق‌های فعال</h3>
             <div id="rooms-list" class="rooms-list">
-                <div class="loading-rooms">Connecting to server...</div>
+                <div class="loading-rooms">در حال اتصال به سرور...</div>
             </div>
         </div>
-        <div class="lobby-footer">
-            <button id="create-room-btn" class="primary-btn">
-                <i class="fa-solid fa-plus"></i> Create New Room
-            </button>
-        </div>
+    </div>
+    <div class="lobby-footer">
+        <button id="create-room-btn" class="primary-btn">
+            <i class="fa-solid fa-plus-circle"></i> ساخت اتاق جدید
+        </button>
     </div>
 </div>
 
@@ -31,13 +31,13 @@
     <header>
         <div class="room-info">
             <button id="toggle-users" class="icon-btn mobile-only">
-                <i class="fa-solid fa-users"></i>
+                <i class="fa-solid fa-sidebar"></i>
             </button>
-            <h2 id="room-name">Room: <span id="current-room">...</span></h2>
+            <h2 id="room-name">اتاق: <span id="current-room">...</span></h2>
         </div>
         <div class="user-info">
-            <span id="current-user">Not joined</span>
-            <button id="leave-btn" class="small-btn">Leave</button>
+            <span id="current-user">وارد نشده</span>
+            <button id="leave-btn" class="small-btn">خروج</button>
         </div>
     </header>
 
@@ -47,7 +47,7 @@
         </div>
 
         <aside class="sidebar">
-            <h3>Users Online</h3>
+            <h3>کاربران آنلاین</h3>
             <ul id="user-list" class="user-list">
                 <!-- User list will be injected here -->
             </ul>
@@ -60,12 +60,12 @@
             <input 
                 type="text" 
                 id="message-input" 
-                placeholder="Type a message..." 
+                placeholder="پیامی بنویسید..." 
                 autocomplete="off"
                 required
             />
-            <button type="submit">
-                <i class="fa-solid fa-paper-plane"></i> Send
+            <button type="submit" class="send-btn">
+                <i class="fa-solid fa-arrow-up"></i>
             </button>
         </form>
     </footer>
@@ -75,6 +75,20 @@
     import { io } from 'socket.io-client';
     import Swal from 'sweetalert2';
     
+    // Custom Apple-style Swal Mixin
+    const AppleSwal = Swal.mixin({
+        background: 'rgba(10, 10, 10, 0.95)',
+        backdrop: `rgba(0,0,0,0.6)`,
+        color: '#ffffff',
+        confirmButtonColor: '#007aff',
+        cancelButtonColor: 'rgba(255,255,255,0.05)',
+        customClass: {
+            popup: 'apple-popup',
+            confirmButton: 'apple-confirm',
+            cancelButton: 'apple-cancel'
+        }
+    });
+
     if (typeof window !== 'undefined') {
         let socket: any;
         let username: string;
@@ -122,7 +136,7 @@
 
         const renderRoomsList = (rooms: any[]) => {
             if (rooms.length === 0) {
-                roomsListDiv.innerHTML = '<div class="no-rooms">No active rooms. Be the first to create one!</div>';
+                roomsListDiv.innerHTML = '<div class="no-rooms">اتاق فعالی وجود ندارد. اولین نفر باشید!</div>';
                 return;
             }
 
@@ -133,9 +147,9 @@
                 roomEl.innerHTML = `
                     <div class="room-details">
                         <span class="room-name">${r.name}</span>
-                        <span class="room-users"><i class="fa-solid fa-users"></i> ${r.count} users</span>
+                        <span class="room-users"><i class="fa-solid fa-users"></i> ${r.count} کاربر</span>
                     </div>
-                    <button class="join-btn" data-room="${r.name}">Join Room</button>
+                    <button class="join-btn" data-room="${r.name}">ورود</button>
                 `;
                 roomsListDiv.appendChild(roomEl);
             });
@@ -150,14 +164,16 @@
         };
 
         const handleJoinRequest = async (roomName?: string) => {
-            const { value: name } = await Swal.fire({
-                title: 'Enter Username',
+            const { value: name } = await AppleSwal.fire({
+                title: 'نام کاربری خود را وارد کنید',
                 input: 'text',
-                inputLabel: 'What should we call you?',
-                inputPlaceholder: 'Username',
+                inputLabel: 'شما را با چه نامی بشناسیم؟',
+                inputPlaceholder: 'نام کاربری...',
                 showCancelButton: true,
+                confirmButtonText: 'تایید',
+                cancelButtonText: 'انصراف',
                 inputValidator: (value) => {
-                    if (!value) return 'You need to write something!';
+                    if (!value) return 'لطفا نام کاربری را وارد کنید!';
                     return null;
                 }
             });
@@ -169,14 +185,16 @@
                     joinRoom();
                 } else {
                     // This was a "Create Room" request
-                    const { value: newRoomName } = await Swal.fire({
-                        title: 'Create New Room',
+                    const { value: newRoomName } = await AppleSwal.fire({
+                        title: 'ساخت اتاق جدید',
                         input: 'text',
-                        inputLabel: 'Room Name',
-                        inputPlaceholder: 'Enter room name...',
+                        inputLabel: 'نام اتاق',
+                        inputPlaceholder: 'نام اتاق را وارد کنید...',
                         showCancelButton: true,
+                        confirmButtonText: 'ساخت اتاق',
+                        cancelButtonText: 'انصراف',
                         inputValidator: (value) => {
-                            if (!value) return 'Room name cannot be empty!';
+                            if (!value) return 'نام اتاق نمی‌تواند خالی باشد!';
                             return null;
                         }
                     });
@@ -191,13 +209,13 @@
         const joinRoom = () => {
             socket.emit('join', { username, room }, (response: any) => {
                 if (response.error) {
-                    Swal.fire('Error', response.error, 'error');
+                    AppleSwal.fire('خطا', response.error, 'error');
                 } else {
                     userRole = response.role;
                     lobbyContainer.style.display = 'none';
                     chatContainer.style.display = 'flex';
                     roomNameSpan.textContent = room;
-                    currentUserSpan.textContent = `Logged in as: ${username} (${userRole})`;
+                    currentUserSpan.textContent = `${username} (${userRole === 'admin' ? 'مدیر' : 'کاربر'})`;
                     setupChatListeners();
                 }
             });
@@ -213,14 +231,14 @@
             });
 
             socket.on('kicked', () => {
-                Swal.fire('Kicked', 'You have been kicked from the room.', 'error').then(() => {
+                AppleSwal.fire('اخراج', 'شما از اتاق اخراج شدید.', 'error').then(() => {
                     location.reload();
                 });
             });
 
             socket.on('userTyping', ({ username: typingUser, isTyping }: any) => {
                 if (isTyping) {
-                    typingIndicator.textContent = `${typingUser} is typing...`;
+                    typingIndicator.textContent = `${typingUser} در حال نوشتن...`;
                 } else {
                     typingIndicator.textContent = '';
                 }
@@ -241,12 +259,12 @@
                 messageElement.classList.add(isSelf ? 'self' : 'other');
             }
 
-            const time = new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const time = new Date(message.timestamp).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
 
             messageElement.innerHTML = `
                 ${!isSystem ? `
                     <div class="message-info">
-                        <strong><i class="fa-solid fa-user-circle"></i> ${message.user}</strong>
+                        <strong>${message.user}</strong>
                         <span>${time}</span>
                     </div>
                 ` : ''}
@@ -266,12 +284,11 @@
                 if (user.isMuted) li.classList.add('muted-item');
 
                 li.innerHTML = `
-                    <i class="fa-solid fa-circle-user" style="color: ${user.role === 'admin' ? '#fbbf24' : 'var(--accent)'}"></i>
+                    <i class="fa-solid fa-circle-user" style="color: ${user.role === 'admin' ? '#fbbf24' : 'rgba(255,255,255,0.4)'}"></i>
                     <div class="user-details">
-                        <span>${user.username} ${user.id === socket.id ? '(You)' : ''}</span>
-                        <small>${user.role}${user.isMuted ? ' | Muted' : ''}</small>
+                        <span>${user.username} ${user.id === socket.id ? '(شما)' : ''}</span>
+                        <small>${user.role === 'admin' ? 'مدیر' : 'کاربر'}${user.isMuted ? ' | بی‌صدا' : ''}</small>
                     </div>
-                    <span class="user-status"></span>
                 `;
 
                 if (userRole === 'admin' && user.id !== socket.id) {
@@ -284,21 +301,22 @@
         };
 
         const showActionMenu = (targetUser: any) => {
-            Swal.fire({
-                title: `Manage ${targetUser.username}`,
-                text: 'Select an action to perform',
+            AppleSwal.fire({
+                title: `مدیریت ${targetUser.username}`,
+                text: 'یک اقدام انتخاب کنید',
                 icon: 'info',
                 showCancelButton: true,
-                confirmButtonText: targetUser.isMuted ? 'Unmute' : 'Mute',
-                denyButtonText: 'Kick',
+                confirmButtonText: targetUser.isMuted ? 'لغو بی‌صدا' : 'بی‌صدا کردن',
+                denyButtonText: 'اخراج',
+                cancelButtonText: 'انصراف',
                 showDenyButton: true,
-                footer: targetUser.role !== 'admin' ? '<button id="promote-btn" class="swal2-confirm swal2-styled" style="background-color: #fbbf24">Promote to Admin</button>' : '',
+                footer: targetUser.role !== 'admin' ? '<button id="promote-btn" class="swal2-confirm swal2-styled" style="background-color: #fbbf24; border-radius: 12px; font-family: inherit;">ارتقا به مدیر</button>' : '',
                 didOpen: () => {
                     const promoteBtn = document.getElementById('promote-btn');
                     if (promoteBtn) {
                         promoteBtn.onclick = () => {
                             socket.emit('admin:promote', targetUser.id);
-                            Swal.close();
+                            AppleSwal.close();
                         };
                     }
                 }
@@ -337,7 +355,12 @@
         });
 
         socket.on('disconnect', () => {
-            Swal.fire('Disconnected', 'Lost connection to server.', 'warning');
+            AppleSwal.fire({
+                title: 'قطع اتصال',
+                text: 'اتصال به سرور برقرار نیست.',
+                icon: 'warning',
+                confirmButtonText: 'تلاش مجدد'
+            });
         });
     }
 </script>
