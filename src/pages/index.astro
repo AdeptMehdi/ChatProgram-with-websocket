@@ -1,0 +1,24 @@
+---
+/**
+ * @fileoverview Main entry page for the Chat Application.
+ */
+import Layout from '../layouts/Layout.astro';
+import Chat from '../components/Chat.astro';
+---
+
+<Layout title="Real-Time Chat | Astro & Socket.io">
+	<main>
+		<Chat />
+	</main>
+</Layout>
+
+<style>
+	main {
+		width: 100%;
+		height: 100vh;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		padding: 1rem;
+	}
+</style>

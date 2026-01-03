@@ -1,0 +1,210 @@
+---
+/**
+ * @fileoverview Main Chat component.
+ * Handles the UI and client-side Socket.io integration.
+ */
+---
+
+<div id="chat-container">
+    <header>
+        <div class="room-info">
+            <h2 id="room-name">Room: <span id="current-room">...</span></h2>
+        </div>
+        <div class="user-info">
+            <span id="current-user">Not joined</span>
+            <button id="leave-btn" class="small-btn">Leave</button>
+        </div>
+    </header>
+
+    <div class="chat-body">
+        <div id="messages">
+            <!-- Messages will be injected here -->
+        </div>
+
+        <aside class="sidebar">
+            <h3>Users Online</h3>
+            <ul id="user-list" class="user-list">
+                <!-- User list will be injected here -->
+            </ul>
+        </aside>
+    </div>
+
+    <footer>
+        <div id="typing-indicator"></div>
+        <form id="chat-form" class="input-area">
+            <input 
+                type="text" 
+                id="message-input" 
+                placeholder="Type a message..." 
+                autocomplete="off"
+                required
+            />
+            <button type="submit">
+                <i class="fa-solid fa-paper-plane"></i> Send
+            </button>
+        </form>
+    </footer>
+</div>
+
+<script>
+    import { io } from 'socket.io-client';
+    
+    // Check if we are on the client side
+    if (typeof window !== 'undefined') {
+        let socket: any;
+        let username: string;
+        let room: string;
+        let typingTimeout: any;
+
+        const chatForm = document.getElementById('chat-form') as HTMLFormElement;
+        const messageInput = document.getElementById('message-input') as HTMLInputElement;
+        const messagesDiv = document.getElementById('messages') as HTMLDivElement;
+        const userListUl = document.getElementById('user-list') as HTMLUListElement;
+        const roomNameSpan = document.getElementById('current-room') as HTMLSpanElement;
+        const currentUserSpan = document.getElementById('current-user') as HTMLSpanElement;
+        const leaveBtn = document.getElementById('leave-btn') as HTMLButtonElement;
+        const typingIndicator = document.getElementById('typing-indicator') as HTMLDivElement;
+
+        // Function to join the chat via SweetAlert2
+        const joinChat = async () => {
+            const { value: formValues } = await (window as any).Swal.fire({
+                title: 'Join Chat Room',
+                html:
+                    '<input id="swal-input1" class="swal2-input" placeholder="Username">' +
+                    '<input id="swal-input2" class="swal2-input" placeholder="Room Name">',
+                focusConfirm: false,
+                allowOutsideClick: false,
+                preConfirm: () => {
+                    return [
+                        (document.getElementById('swal-input1') as HTMLInputElement).value,
+                        (document.getElementById('swal-input2') as HTMLInputElement).value
+                    ]
+                }
+            });
+
+            if (formValues) {
+                [username, room] = formValues;
+                if (!username || !room) {
+                    (window as any).Swal.fire('Error', 'Username and Room are required!', 'error').then(joinChat);
+                    return;
+                }
+                initSocket();
+            }
+        };
+
+        const initSocket = () => {
+            // Connect to the backend server (running on port 4000)
+            socket = io('http://localhost:4000');
+
+            socket.on('connect', () => {
+                socket.emit('join', { username, room }, (error: any) => {
+                    if (error) {
+                        (window as any).Swal.fire('Error', error, 'error').then(joinChat);
+                    } else {
+                        roomNameSpan.textContent = room;
+                        currentUserSpan.textContent = `Logged in as: ${username}`;
+                    }
+                });
+            });
+
+            socket.on('message', (message: any) => {
+                appendMessage(message);
+            });
+
+            socket.on('roomData', ({ users }: any) => {
+                renderUserList(users);
+            });
+
+            socket.on('userTyping', ({ username: typingUser, isTyping }: any) => {
+                if (isTyping) {
+                    typingIndicator.textContent = `${typingUser} is typing...`;
+                } else {
+                    typingIndicator.textContent = '';
+                }
+            });
+
+            socket.on('disconnect', () => {
+                (window as any).Swal.fire('Disconnected', 'Lost connection to server.', 'warning');
+            });
+        };
+
+        const appendMessage = (message: any) => {
+            const messageElement = document.createElement('div');
+            const isSelf = message.user === username;
+            const isSystem = message.user === 'system';
+
+            messageElement.classList.add('message');
+            if (isSystem) {
+                messageElement.classList.add('system');
+            } else {
+                messageElement.classList.add(isSelf ? 'self' : 'other');
+            }
+
+            const time = new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            messageElement.innerHTML = `
+                ${!isSystem ? `
+                    <div class="message-info">
+                        <strong>${message.user}</strong>
+                        <span>${time}</span>
+                    </div>
+                ` : ''}
+                <div class="message-text">${message.text}</div>
+            `;
+
+            messagesDiv.appendChild(messageElement);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        };
+
+        const renderUserList = (users: any[]) => {
+            userListUl.innerHTML = '';
+            users.forEach(user => {
+                const li = document.createElement('li');
+                li.className = 'user-item';
+                li.innerHTML = `<span class="user-status"></span> ${user.username}`;
+                userListUl.appendChild(li);
+            });
+        };
+
+        chatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const text = messageInput.value.trim();
+            if (text && socket) {
+                socket.emit('sendMessage', text, () => {
+                    messageInput.value = '';
+                    messageInput.focus();
+                });
+            }
+        });
+
+        // Typing indicator logic
+        messageInput.addEventListener('input', () => {
+            if (socket) {
+                socket.emit('typing', true);
+                clearTimeout(typingTimeout);
+                typingTimeout = setTimeout(() => {
+                    socket.emit('typing', false);
+                }, 2000);
+            }
+        });
+
+        leaveBtn.addEventListener('click', () => {
+            location.reload();
+        });
+
+        // Start by showing the join dialog
+        joinChat();
+    }
+</script>
+
+<style>
+    .small-btn {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+        margin-left: 1rem;
+        background-color: var(--error-color);
+    }
+    .small-btn:hover {
+        background-color: #dc2626;
+    }
+</style>
